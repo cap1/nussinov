@@ -42,7 +42,9 @@ sub fill_array
 	{	
 		for (my $x = $j ; $x < $size; $x++)
 		{
-			$field->[$x][$x-$j]{score} = &gamma($sequence,$field,$x,$x-$j);
+			my $resultHash = &gamma($sequence,$field,$x,$x-$j);
+			$field->[$x][$x-$j]{score} = $resultHash->{score};
+			$field->[$x][$x-$j]{ptr} = $resultHash->{ptr};
 		}
 	}
 }
@@ -56,19 +58,22 @@ sub gamma
 	my $j     = shift;
 	my $i     = shift;
 	my @results;
-	my $max=0;
-	push(@results, $field->[$j - 1][$i + 1]{score}  + &delta(substr($sequence,$j,1),substr($sequence,$i,1)));
-	push(@results, $field->[$j - 1][$i    ]{score});
-	push(@results, $field->[$j    ][$i + 1]{score});
+	my $max;
 
+	my %diag = ( score => $field->[$j - 1][$i + 1]{score}  + &delta(substr($sequence,$j,1),substr($sequence,$i,1)), ptr => "d");
+	my %left = ( score => $field->[$j - 1][$i    ]{score}, ptr => "l");
+	my %up   = ( score => $field->[$j    ][$i + 1]{score}, ptr => "u");
+	my %bifork = ();
+
+	push(@results,\%diag);
+	push(@results,\%up);
+	push(@results,\%left);
 	my $kmax=0;
 	for (my $k=$j; $k<$i; $k++)
 	{
 			
 	}
-
-
-	$max = (sort(@results))[-1];    
+	$max = (sort { $a->{score} <=> $b->{score}  }  (@results))[-1];    
 
 	return $max;
 }
@@ -90,9 +95,9 @@ sub printField
 		print(" " . substr($sequence,$i,1) . " ");
 		for (my $j = 0 ; $j < $size ; $j++)
 		{
-			if (defined($field->[$j][$i]{score}))
+			if (defined($field->[$j][$i]{ptr}))
 			{
-				print(" ",$field->[$j][$i]{score}, " ");
+				print(" ",$field->[$j][$i]{ptr}, " ");
 			}
 			elsif($j<$i)
 			{
