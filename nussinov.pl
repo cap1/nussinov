@@ -54,15 +54,21 @@ sub gamma {
 	);
 	my %left = (score => $field->[ $j - 1 ][$i]{score}, ptr => "l");
 	my %up = (score => $field->[$j][ $i + 1 ]{score}, ptr => "u");
-	my %bifork = ();
+	my %bifork = (score => 0, ptr => "b");
 
-	push(@results, \%diag);
 	push(@results, \%up);
 	push(@results, \%left);
-	my $kmax = 0;
-	for (my $k = $j ; $k < $i ; $k++) {
 
+	for (my $k = $j ; $k < $i ; $k++) {
+		my $kTmp = $field->[$j][$k]{score} + $field->[$k+1][$i]{score};
+		if ($kTmp > $bifork{score}) {
+			$bifork{score} = $kTmp;
+			$bifork{ptr} = $k;
+		}
 	}
+	push(@results, \%bifork);
+	push(@results, \%diag);
+
 	$max = (sort { $a->{score} <=> $b->{score} } (@results))[-1];
 
 	return $max;
@@ -81,8 +87,8 @@ sub printField {
 	for (my $i = 0 ; $i < $size ; $i++) {
 		print(" " . substr($sequence, $i, 1) . " ");
 		for (my $j = 0 ; $j < $size ; $j++) {
-			if (defined($field->[$j][$i]{ptr})) {
-				print(" ", $field->[$j][$i]{ptr}, " ");
+			if (defined($field->[$j][$i]{score})) {
+				print(" ", $field->[$j][$i]{score}, " ");
 			}
 			elsif ($j < $i) {
 				print("   ");
