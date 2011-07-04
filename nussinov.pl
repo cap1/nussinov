@@ -12,59 +12,79 @@ sub readFile {
 }
 
 sub delta {
-	my $i = shift;
 	my $j = shift;
-		print "$i$j\n";
-	if ((($i eq 'A') && ($j eq 'U')) || (($i eq 'U') && ($j eq 'A'))) {
+	my $i = shift;
+	if ((($i eq 'A') && ($j eq 'U')) || (($j eq 'U') && ($i eq 'A'))) {
 		return 1;
 	}
-	if ((($i eq 'G') && ($j eq 'C')) || (($i eq 'C') && ($j eq 'G'))) {
+	if ((($i eq 'G') && ($j eq 'C')) || (($j eq 'C') && ($i eq 'G'))) {
 		return 1;
 	}
-	if ((($i eq 'G') && ($j eq 'U')) || (($i eq 'U') && ($j eq 'G'))) {
+	if ((($i eq 'G') && ($j eq 'U')) || (($j eq 'U') && ($i eq 'G'))) {
 		return 1;
 	}
 	return 0;
 }
 
 sub fill_array {
+	my $field    = shift;
+	my $size     = shift;
 	my $sequence = shift;
-	my $field = shift;
-	my $size  = shift;
+
 	for (my $j = 1 ; $j < $size ; $j++) {
 		for (my $x = $j ; $x < $size ; $x++) {
-			$field->[$x][$x-$j]{score} = &gamma($sequence,$field,$x,$x-$j);
+			my $resultHash = &gamma($sequence, $field, $x, $x - $j);
+			$field->[$x][ $x - $j ]{score} = $resultHash->{score};
+			$field->[$x][ $x - $j ]{ptr}   = $resultHash->{ptr};
 		}
 	}
 }
 
-
 sub gamma {
 	my $sequence = shift;
-	my $field = shift;
-	my $j     = shift;
-	my $i     = shift;
+	my $field    = shift;
+	my $j        = shift;
+	my $i        = shift;
 	my @results;
+	my $max;
 
-	
-	push(@results, $field->[$j-1][$i+1]{score} + &delta(substr($sequence,$i,1),substr($sequence,$j,1)));
-	push(@results, $field->[$j-1][$i]{score});
-	push(@results,	$field->[$j][$i+1]{score});
-	
-	my $max = (sort(@results))[-1];    #[-1] ~ nimmt letztes element des arrays...
+	my %diag = (
+		score => $field->[ $j - 1 ][ $i + 1 ]{score} + &delta(substr($sequence, $j, 1), substr($sequence, $i, 1)),
+		ptr   => "d"
+	);
+	my %left = (score => $field->[ $j - 1 ][$i]{score}, ptr => "l");
+	my %up = (score => $field->[$j][ $i + 1 ]{score}, ptr => "u");
+	my %bifork = ();
+
+	push(@results, \%diag);
+	push(@results, \%up);
+	push(@results, \%left);
+	my $kmax = 0;
+	for (my $k = $j ; $k < $i ; $k++) {
+
+	}
+	$max = (sort { $a->{score} <=> $b->{score} } (@results))[-1];
 
 	return $max;
 }
 
 sub printField {
-	my $field = shift;
-	my $size  = shift;
+	my $field    = shift;
+	my $size     = shift;
+	my $sequence = shift;
+	print("   ");
 	for (my $j = 0 ; $j < $size ; $j++) {
-		for (my $i = 0 ; $i < $size ; $i++) {
-			if (defined($field->[$i][$j]{score})) {
-				print(" " . $field->[$i][$j]{score} . " ");
+		print(" " . substr($sequence, $j, 1) . " ");
+	}
+	print("\n");
+
+	for (my $i = 0 ; $i < $size ; $i++) {
+		print(" " . substr($sequence, $i, 1) . " ");
+		for (my $j = 0 ; $j < $size ; $j++) {
+			if (defined($field->[$j][$i]{ptr})) {
+				print(" ", $field->[$j][$i]{ptr}, " ");
 			}
-			elsif ($i<$j) {
+			elsif ($j < $i) {
 				print("   ");
 			}
 			else {
@@ -98,8 +118,8 @@ sub main {
 			print($sequence= &readFile($ARGV[0]), "\n");
 			my $size = length($sequence);
 			&initializeField(\@field, $size);
-			&fill_array($sequence,\@field,$size);
-			&printField(\@field, $size);
+			&fill_array(\@field, $size, $sequence);
+			&printField(\@field, $size, $sequence);
 		}
 	}
 
