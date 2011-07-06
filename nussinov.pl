@@ -48,8 +48,7 @@ sub traceback {
 	my $j	= $size-1;
 	my $i = 0;
 
-	my $left = "";
-	my $right = "";
+	my $result = "." x $size;
 	my @stack = ();
 
 	push(@stack,$field->[$j][$i]);
@@ -58,19 +57,16 @@ sub traceback {
 		my	$current = pop(@stack);
 		
 		next if ($current->{ptr} eq "n");
-		print $current->{ptr} ."\n";
 
 		if ($current->{ptr} eq "d") {
-			$right = ")" .  $right;
-			$left .= "(";
+			substr($result,$current->{i},1) = "(";
+			substr($result,$current->{j},1) = ")";
 			push(@stack,$field->[$current->{j}-1][$current->{i}+1]);
 		}
 		elsif ($current->{ptr} eq "l") {
-			$right = ".".$right;
 			push(@stack,$field->[$current->{j}-1][$current->{i}]);
 		}
 		elsif ($current->{ptr} eq "u") {
-			$left .= ".";
 			push(@stack,$field->[$current->{j}][$current->{i}+1]);
 		}
 		elsif ($current->{ptr} eq "b") {
@@ -78,7 +74,7 @@ sub traceback {
 			push(@stack,$field->[$current->{j}][$current->{k}]);
 		}
 	}
-	print "\n\n$sequence\n$left$right\n";
+	print "\n\n$sequence\n$result\n";
 	return 1;
 }
 
@@ -163,7 +159,7 @@ sub main {
 	}
 	else {
 		if (scalar(@ARGV) == 1) {
-			print($sequence= &readFile($ARGV[0]), "\n");
+			$sequence= &readFile($ARGV[0], "\n");
 			my $size = length($sequence);
 			&initializeField(\@field, $size);
 			&fill_array(\@field, $size, $sequence);
